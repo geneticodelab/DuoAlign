@@ -94,10 +94,10 @@ def load_and_preprocess(rna_path, atac_path, anno_path):
     adata_pro.var_names_make_unique()
 
     if not os.path.isfile(anno_path):
-        raise FileNotFoundError(f"未找到标签文件: {anno_path}")
+        raise FileNotFoundError(f"Label file not found: {anno_path}")
     anno = pd.read_csv(anno_path)
     if args.label_col not in anno.columns:
-        raise KeyError(f"anno.csv 中无列 '{args.label_col}', 可用列: {list(anno.columns)}")
+        raise KeyError(f"No column '{args.label_col}' in anno.csv, available columns: {list(anno.columns)}")
     label_map = dict(zip(anno['barcode'].astype(str), anno[args.label_col].astype(str)))
     adata_rna.obs['manual-anno'] = adata_rna.obs_names.map(label_map).astype(str)
     adata_rna.obs['manual-anno'] = adata_rna.obs['manual-anno'].replace('nan', np.nan)
@@ -105,7 +105,7 @@ def load_and_preprocess(rna_path, atac_path, anno_path):
     valid = adata_rna.obs['manual-anno'].notna()
     n_filtered = (~valid).sum()
     if n_filtered > 0:
-        print(f"  ⚠️ 剔除 {n_filtered} 个无标签细胞")
+        print(f"  ⚠️ Dropped {n_filtered} unlabelled cells")
         adata_rna = adata_rna[valid].copy()
         adata_pro = adata_pro[valid].copy()
     adata_pro = adata_pro[adata_rna.obs_names].copy()
@@ -188,7 +188,7 @@ def run_slice(slice_name, rna_path, atac_path, anno_path):
     print("-" * 30)
     docx_order = ['MI', 'NMI', 'AMI', 'FMI', 'ARI', 'V-Measure', 'F1', 'Jaccard', 'Compl']
     vals9 = [metrics[k] * 100 for k in docx_order]
-    print("docx参考格式 (" + ",".join(docx_order) + ", %): "
+    print("docx reference format (" + ",".join(docx_order) + ", %): "
           + " ".join(f"{v:.2f}" for v in vals9))
     print("=" * 62 + "\n")
 
@@ -228,17 +228,17 @@ if __name__ == '__main__':
     slices = discover_slices(args.data_root)
     if not slices:
         raise FileNotFoundError(
-            f"未在 {args.data_root} 下发现任何 "
-            f"'{args.dir_prefix}*{args.dir_suffix}' 子目录(含 rna/atac/anno 三件套)。"
-            f"请检查 DUOALIGN_DATA_ROOT / dir_prefix / dir_suffix 配置。")
+            f"No subdirectories under {args.data_root} match "
+            f"'{args.dir_prefix}*{args.dir_suffix}' (each needs rna/atac/anno)."
+            f" Please check the DUOALIGN_DATA_ROOT / dir_prefix / dir_suffix settings.")
 
     env_slices = os.environ.get('DUOALIGN_SLICES', '').strip()
     if env_slices:
         want = [s.strip() for s in env_slices.split(',') if s.strip()]
         slices = {k: v for k, v in slices.items() if k in want}
         if not slices:
-            raise ValueError(f"DUOALIGN_SLICES={env_slices} 与发现到的切片 "
-                             f"{list(discover_slices(args.data_root))} 无交集")
+            raise ValueError(f"DUOALIGN_SLICES={env_slices} does not intersect the discovered slices "
+                             f"{list(discover_slices(args.data_root))}")
 
     print(f"📁 Data root: {args.data_root}")
     print(f"🔬 Slices to run: {list(slices.keys())}")
@@ -249,13 +249,13 @@ if __name__ == '__main__':
             name, metrics = run_slice(name, rna_p, atac_p, anno_p)
             summary[name] = metrics
         except Exception as e:
-            print(f"❌ Slice {name} 失败: {e}")
+            print(f"❌ Slice {name} failed: {e}")
             import traceback
             traceback.print_exc()
 
     if summary:
         print("\n" + "=" * 62)
-        print("📊 Mouse_Brain_MISAR 全切片汇总 (DuoAlign, 10 metrics)")
+        print("📊 Mouse_Brain_MISAR summary over all slices (DuoAlign, 10 metrics)")
         print("=" * 62)
         rows = []
         for name, m in summary.items():

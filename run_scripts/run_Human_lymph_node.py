@@ -92,7 +92,7 @@ def load_and_preprocess(rna_path, adt_path):
     adata_pro.var_names_make_unique()
 
     if args.label_key not in adata_rna.obs.columns:
-        raise KeyError(f"标签列 '{args.label_key}' 不在 obs 中, 可用列: {list(adata_rna.obs.columns)}")
+        raise KeyError(f"Label column '{args.label_key}' not in obs, available columns: {list(adata_rna.obs.columns)}")
     adata_rna.obs['manual-anno'] = adata_rna.obs[args.label_key].astype(str)
     adata_pro = adata_pro[adata_rna.obs_names].copy()
 
@@ -166,7 +166,7 @@ def run_slice(slice_name, rna_path, adt_path):
     print("-" * 30)
     docx_order = ['MI', 'NMI', 'AMI', 'FMI', 'ARI', 'V-Measure', 'F1', 'Jaccard', 'Compl']
     vals9 = [metrics[k] * 100 for k in docx_order]
-    print("docx参考格式 (" + ",".join(docx_order) + ", %): "
+    print("docx reference format (" + ",".join(docx_order) + ", %): "
           + " ".join(f"{v:.2f}" for v in vals9))
     print("=" * 62 + "\n")
 
@@ -206,15 +206,15 @@ if __name__ == '__main__':
     slices = discover_slices(args.dataset_dir)
     if not slices:
         raise FileNotFoundError(
-            f"未在 {args.dataset_dir} 下发现任何 '*_adata_rna.h5ad + *_adata_adt.h5ad' 配对。"
-            f"请检查 DUOALIGN_DATA_ROOT / dataset_dir 配置。")
+            f"No '*_adata_rna.h5ad + *_adata_adt.h5ad' pairs found under {args.dataset_dir}."
+            f" Please check the DUOALIGN_DATA_ROOT / dataset_dir settings.")
 
     env_slices = os.environ.get('DUOALIGN_SLICES', '').strip()
     if env_slices:
         want = [s.strip() for s in env_slices.split(',') if s.strip()]
         slices = {k: v for k, v in slices.items() if k in want}
         if not slices:
-            raise ValueError(f"DUOALIGN_SLICES={env_slices} 与发现到的切片 {list(discover_slices(args.dataset_dir))} 无交集")
+            raise ValueError(f"DUOALIGN_SLICES={env_slices} does not intersect the discovered slices {list(discover_slices(args.dataset_dir))}")
 
     print(f"📁 Dataset: {args.dataset_dir}")
     print(f"🔬 Slices to run: {list(slices.keys())}")
@@ -225,13 +225,13 @@ if __name__ == '__main__':
             name, metrics = run_slice(name, rna_p, adt_p)
             summary[name] = metrics
         except Exception as e:
-            print(f"❌ Slice {name} 失败: {e}")
+            print(f"❌ Slice {name} failed: {e}")
             import traceback
             traceback.print_exc()
 
     if summary:
         print("\n" + "=" * 62)
-        print("📊 Human_lymph_node 全切片汇总 (DuoAlign, 10 metrics)")
+        print("📊 Human_lymph_node summary over all slices (DuoAlign, 10 metrics)")
         print("=" * 62)
         rows = []
         for name, m in summary.items():

@@ -96,7 +96,7 @@ def load_and_preprocess(rna_path, atac_path):
     adata_pro.var_names_make_unique()
 
     if args.label_key not in adata_rna.obs.columns:
-        raise KeyError(f"标签列 '{args.label_key}' 不在 obs 中, 可用列: {list(adata_rna.obs.columns)}")
+        raise KeyError(f"Label column '{args.label_key}' not in obs, available columns: {list(adata_rna.obs.columns)}")
     adata_rna.obs['manual-anno'] = adata_rna.obs[args.label_key].astype(str)
     adata_pro = adata_pro[adata_rna.obs_names].copy()
 
@@ -176,7 +176,7 @@ def run_slice(slice_name, rna_path, atac_path):
     print("-" * 30)
     docx_order = ['MI', 'NMI', 'AMI', 'FMI', 'ARI', 'V-Measure', 'F1', 'Jaccard', 'Compl']
     vals9 = [metrics[k] * 100 for k in docx_order]
-    print("docx参考格式 (" + ",".join(docx_order) + ", %): "
+    print("docx reference format (" + ",".join(docx_order) + ", %): "
           + " ".join(f"{v:.2f}" for v in vals9))
     print("=" * 62 + "\n")
 
@@ -216,8 +216,8 @@ if __name__ == '__main__':
     slices = discover_slices(args.dataset_dir)
     if not slices:
         raise FileNotFoundError(
-            f"未在 {args.dataset_dir} 下发现任何 '*_rna.h5ad + *_ATAC.h5ad' 配对。"
-            f"请检查 DUOALIGN_DATA_ROOT / dataset_dir 配置。")
+            f"No '*_rna.h5ad + *_ATAC.h5ad' pairs found under {args.dataset_dir}."
+            f" Please check the DUOALIGN_DATA_ROOT / dataset_dir settings.")
 
     print(f"📁 Dataset: {args.dataset_dir}")
     print(f"🔬 Sections to run: {list(slices.keys())}")
@@ -228,13 +228,13 @@ if __name__ == '__main__':
             name, metrics = run_slice(name, rna_p, atac_p)
             summary[name] = metrics
         except Exception as e:
-            print(f"❌ Section {name} 失败: {e}")
+            print(f"❌ Section {name} failed: {e}")
             import traceback
             traceback.print_exc()
 
     if summary:
         print("\n" + "=" * 62)
-        print("📊 Human_placenta 汇总 (DuoAlign, 10 metrics)")
+        print("📊 Human_placenta summary (DuoAlign, 10 metrics)")
         print("=" * 62)
         rows = []
         for name, m in summary.items():

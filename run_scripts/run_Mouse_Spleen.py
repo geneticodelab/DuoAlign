@@ -89,10 +89,10 @@ def load_and_preprocess(rna_path, pro_path, anno_path):
     adata_pro.var_names_make_unique()
 
     if not os.path.isfile(anno_path):
-        raise FileNotFoundError(f"未找到标签文件: {anno_path}")
+        raise FileNotFoundError(f"Label file not found: {anno_path}")
     anno = pd.read_csv(anno_path, dtype={args.barcode_col: str})
     if args.label_col not in anno.columns:
-        raise KeyError(f"标签文件无列 '{args.label_col}', 可用列: {list(anno.columns)}")
+        raise KeyError(f"Label file has no column '{args.label_col}', available columns: {list(anno.columns)}")
     anno = anno.dropna(subset=[args.barcode_col, args.label_col])
     label_map = dict(zip(anno[args.barcode_col].astype(str),
                          anno[args.label_col].astype(str)))
@@ -102,7 +102,7 @@ def load_and_preprocess(rna_path, pro_path, anno_path):
     valid = adata_rna.obs['manual-anno'].notna()
     n_filtered = (~valid).sum()
     if n_filtered > 0:
-        print(f"  ⚠️ 剔除 {n_filtered} 个无标签细胞")
+        print(f"  ⚠️ Dropped {n_filtered} unlabelled cells")
         adata_rna = adata_rna[valid].copy()
         adata_pro = adata_pro[valid].copy()
     adata_pro = adata_pro[adata_rna.obs_names].copy()
@@ -180,7 +180,7 @@ def run_slice(slice_name, rna_path, pro_path, anno_path):
     print("-" * 30)
     docx_order = ['MI', 'NMI', 'AMI', 'FMI', 'ARI', 'V-Measure', 'F1', 'Jaccard', 'Compl']
     vals9 = [metrics[k] * 100 for k in docx_order]
-    print("docx参考格式 (" + ",".join(docx_order) + ", %): "
+    print("docx reference format (" + ",".join(docx_order) + ", %): "
           + " ".join(f"{v:.2f}" for v in vals9))
     print("=" * 62 + "\n")
 
@@ -220,12 +220,12 @@ if __name__ == '__main__':
     slices = discover_slices(args.dataset_dir)
     if not slices:
         raise FileNotFoundError(
-            f"未在 {args.dataset_dir} 下发现任何 '*_RNA.h5ad + *_Pro.h5ad' 配对。"
-            f"请检查 DUOALIGN_DATA_ROOT / dataset_dir 配置。")
+            f"No '*_RNA.h5ad + *_Pro.h5ad' pairs found under {args.dataset_dir}."
+            f" Please check the DUOALIGN_DATA_ROOT / dataset_dir settings.")
 
     anno_path = os.path.join(args.dataset_dir, args.anno_fname)
     if not os.path.isfile(anno_path):
-        raise FileNotFoundError(f"缺少标签文件: {anno_path}")
+        raise FileNotFoundError(f"Missing label file: {anno_path}")
 
     print(f"📁 Dataset: {args.dataset_dir}")
     print(f"🔬 Sections to run: {list(slices.keys())}")
@@ -236,13 +236,13 @@ if __name__ == '__main__':
             name, metrics = run_slice(name, rna_p, pro_p, anno_path)
             summary[name] = metrics
         except Exception as e:
-            print(f"❌ Section {name} 失败: {e}")
+            print(f"❌ Section {name} failed: {e}")
             import traceback
             traceback.print_exc()
 
     if summary:
         print("\n" + "=" * 62)
-        print("📊 Mouse_Spleen 汇总 (DuoAlign, 10 metrics)")
+        print("📊 Mouse_Spleen summary (DuoAlign, 10 metrics)")
         print("=" * 62)
         rows = []
         for name, m in summary.items():

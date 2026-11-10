@@ -109,7 +109,7 @@ data_dict = {'adata_omics1': adata_rna, 'adata_omics2': adata_pro, 'graphs': gra
 print("Initializing DuoAlign Trainer...")
 trainer = Train_DuoAlign(data_dict, args)
 
-print("\n=== Stage 1: Single-omics Pretraining (仅阶段一, 阶段二已移除) ===")
+print("\n=== Stage 1: Single-omics Pretraining (stage 1 only, stage 2 removed) ===")
 init_z = trainer.pretrain()
 
 from sklearn.cluster import KMeans
@@ -128,7 +128,7 @@ for name, val in metrics.items():
 print("-" * 30)
 docx_order = ['MI', 'NMI', 'AMI', 'FMI', 'ARI', 'V-Measure', 'F1', 'Jaccard', 'Compl']
 vals9 = [metrics[k] * 100 for k in docx_order]
-print("docx参考格式 (" + ",".join(docx_order) + ", %): " + " ".join(f"{v:.2f}" for v in vals9))
+print("docx reference format (" + ",".join(docx_order) + ", %): " + " ".join(f"{v:.2f}" for v in vals9))
 print("=" * 62 + "\n")
 
 with torch.no_grad():
